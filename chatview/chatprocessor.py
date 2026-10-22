@@ -1519,8 +1519,11 @@ class AntigravityMessageProcessor(BaseChatMessageProcessor):
     _TOOL_DISPLAY_NAMES = {
         "run_command": "RunCommand",
         "view_file": "ViewFile",
+        "read_file": "ReadFile",
         "write_to_file": "WriteFile",
+        "write_file": "WriteFile",
         "replace_file_content": "EditFile",
+        "edit_file": "EditFile",
         "multi_replace_file_content": "EditFile",
         "list_dir": "ListDir",
         "grep_search": "GrepSearch",
@@ -1536,8 +1539,11 @@ class AntigravityMessageProcessor(BaseChatMessageProcessor):
     _TOOL_FILE_NAMES = (
         "Read", "Edit", "Write",
         "view_file", "ViewFile",
+        "read_file", "ReadFile",
         "write_to_file", "WriteFile",
+        "write_file",
         "replace_file_content", "EditFile",
+        "edit_file",
         "multi_replace_file_content",
         "sed_file",
     )
@@ -1870,9 +1876,14 @@ class AntigravityMessageProcessor(BaseChatMessageProcessor):
                 return f"⏺ {display_name} ({lines[0]})"
             return f"⏺ {display_name}"
 
-        if name == "view_file":
-            abs_p = params.get("AbsolutePath") or params.get("path") or ""
-            _, rel_p = _resolve_rel_path(abs_p, cwd)
+        if name in ("view_file", "read_file"):
+            file_path = (
+                params.get("Path")
+                or params.get("AbsolutePath")
+                or params.get("path")
+                or ""
+            )
+            _, rel_p = _resolve_rel_path(file_path, cwd)
             start_line = params.get("StartLine")
             end_line = params.get("EndLine")
             if start_line is not None and end_line is not None:
@@ -1881,8 +1892,16 @@ class AntigravityMessageProcessor(BaseChatMessageProcessor):
                 return f"⏺ {display_name} {rel_p}#L{start_line}"
             return f"⏺ {display_name} {rel_p}"
 
-        if name in ("write_to_file", "replace_file_content", "multi_replace_file_content"):
-            tgt = params.get("TargetFile") or params.get("path") or ""
+        if name in (
+            "write_to_file", "write_file", "replace_file_content",
+            "multi_replace_file_content", "edit_file"
+        ):
+            tgt = (
+                params.get("TargetFile")
+                or params.get("Path")
+                or params.get("path")
+                or ""
+            )
             _, rel_p = _resolve_rel_path(tgt, cwd)
             return f"⏺ {display_name} {rel_p}"
 
@@ -1899,7 +1918,14 @@ class AntigravityMessageProcessor(BaseChatMessageProcessor):
 
         if name == "search_web":
             query = params.get("query") or ""
-            return f"⏺ {display_name} ({query})"
+            if query:
+                lines = query.strip().splitlines()
+                if len(lines) > 1:
+                    first_line = lines[0]
+                    indented_rest = "\n".join("    " + line for line in lines[1:])
+                    return f"⏺ {display_name} ({first_line})\n\n{indented_rest}\n"
+                return f"⏺ {display_name} ({lines[0]})"
+            return f"⏺ {display_name}"
 
         if name == "read_url_content":
             url = params.get("Url") or ""

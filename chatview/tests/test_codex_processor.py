@@ -507,28 +507,89 @@ class TestThinkPresets(unittest.TestCase):
         self.assertEqual(session.available_models[0]["annotation"], "Reasoning")
 
     def test_antigravity_tool_formatting(self):
-        session = SimpleNamespace(agent_thread=SimpleNamespace(cwd="/workspace"), cwd="/workspace", available_models=[])
+        session = SimpleNamespace(
+            agent_thread=SimpleNamespace(cwd="/workspace"),
+            cwd="/workspace",
+            available_models=[],
+        )
         processor = AntigravityMessageProcessor(session)
 
         # run_command
         cmd_block = {"name": "run_command", "parameters": {"CommandLine": "git status"}}
         self.assertEqual(processor._format_tool_block(cmd_block), "⏺ RunCommand (git status)")
 
+        # run_command multiline
+        multi_cmd = {
+            "name": "run_command",
+            "parameters": {"CommandLine": "echo first\necho second"},
+        }
+        self.assertEqual(
+            processor._format_tool_block(multi_cmd),
+            "⏺ RunCommand (echo first)\n\n    echo second\n",
+        )
+
         # view_file
         view_block = {"name": "view_file", "parameters": {"AbsolutePath": "/workspace/foo.py"}}
         self.assertEqual(processor._format_tool_block(view_block), "⏺ ViewFile foo.py")
+
+        # read_file with Path and lines
+        read_lines = {
+            "name": "read_file",
+            "parameters": {"Path": "/workspace/foo.py", "StartLine": 30, "EndLine": 120},
+        }
+        self.assertEqual(processor._format_tool_block(read_lines), "⏺ ReadFile foo.py#L30-L120")
+
+        # read_file with Path and start line
+        read_start = {
+            "name": "read_file",
+            "parameters": {"Path": "/workspace/foo.py", "StartLine": 50},
+        }
+        self.assertEqual(processor._format_tool_block(read_start), "⏺ ReadFile foo.py#L50")
+
+        # read_file with Path only
+        read_plain = {"name": "read_file", "parameters": {"Path": "/workspace/foo.py"}}
+        self.assertEqual(processor._format_tool_block(read_plain), "⏺ ReadFile foo.py")
 
         # write_to_file
         write_block = {"name": "write_to_file", "parameters": {"TargetFile": "/workspace/bar.py"}}
         self.assertEqual(processor._format_tool_block(write_block), "⏺ WriteFile bar.py")
 
+        # write_file with Path
+        write_file_block = {"name": "write_file", "parameters": {"Path": "/workspace/bar.py"}}
+        self.assertEqual(processor._format_tool_block(write_file_block), "⏺ WriteFile bar.py")
+
         # replace_file_content
-        edit_block = {"name": "replace_file_content", "parameters": {"TargetFile": "/workspace/bar.py"}}
+        edit_block = {
+            "name": "replace_file_content",
+            "parameters": {"TargetFile": "/workspace/bar.py"},
+        }
         self.assertEqual(processor._format_tool_block(edit_block), "⏺ EditFile bar.py")
 
-        # search_web
+        # edit_file with Path
+        edit_file_block = {"name": "edit_file", "parameters": {"Path": "/workspace/bar.py"}}
+        self.assertEqual(processor._format_tool_block(edit_file_block), "⏺ EditFile bar.py")
+
+        # search_web with query
         search_block = {"name": "search_web", "parameters": {"query": "gemini 3.8"}}
         self.assertEqual(processor._format_tool_block(search_block), "⏺ SearchWeb (gemini 3.8)")
+
+        # search_web without query
+        search_empty = {"name": "search_web", "parameters": {"query": ""}}
+        self.assertEqual(processor._format_tool_block(search_empty), "⏺ SearchWeb")
+
+        # search_web multiline query
+        search_multi = {"name": "search_web", "parameters": {"query": "gemini\nflash"}}
+        self.assertEqual(
+            processor._format_tool_block(search_multi),
+            "⏺ SearchWeb (gemini)\n\n    flash\n",
+        )
+
+        # Tool file jump parsing
+        from chatview.chatprocessor import _parse_tool_file_line
+        parsed = _parse_tool_file_line(
+            "⏺ ReadFile foo.py#L30-L120", processor._tool_file_re, "/workspace"
+        )
+        self.assertEqual(parsed, ("/workspace/foo.py", 30))
 
     def test_antigravity_permission_request(self):
         session = SimpleNamespace(
