@@ -466,7 +466,11 @@ class AgentThread(threading.Thread):
                 try:
                     new_session_id = await self.agent.rewind(user_message_id)
                 except Exception as e:
-                    LOG.error(f"[rewind] agent.rewind failed: {e}", exc_info=True)
+                    error_msg = str(e)
+                    LOG.error(f"[rewind] agent.rewind failed: {error_msg}")
+                    sublime.set_timeout(
+                        lambda: self.on_message(("error", f"Rewind failed: {error_msg}")), 0
+                    )
             if on_done:
                 sublime.set_timeout(lambda: on_done(new_session_id), 0)
 
@@ -515,9 +519,10 @@ class AgentThread(threading.Thread):
                 lambda: self.on_message(("reset_complete", "Session reset successfully")), 0
             )
         except Exception as e:
-            LOG.error(f"Error resetting agent: {e}")
+            error_msg = str(e)
+            LOG.error(f"Error resetting agent: {error_msg}")
             sublime.set_timeout(
-                lambda: self.on_message(("error", f"Failed to reset session: {str(e)}")), 0
+                lambda: self.on_message(("error", f"Failed to reset session: {error_msg}")), 0
             )
 
     async def _send_permission_response(self, request_id, response_data, is_extension_ui=False):
@@ -964,7 +969,7 @@ class PermissionPanel:
             name = os.path.basename(file_path) if file_path else "new_file"
             self.diff_data[request_id] = (old_text, new_text, name)
             return f'📄 <a href="show_diff" class="file-link">{self._html_escape(name)}</a>'
-        elif tool_name == "command_execution":
+        elif tool_name in ("command_execution", "Bash", "bash"):
             command = input_data.get("command", "")
             cwd = input_data.get("cwd", "")
             display = self._html_escape(command)
@@ -1990,7 +1995,9 @@ class ChatSession:
                 session_info = self._fetch_session_info(current_agent_provider, old_session_id, cwd)
                 self._append_resume_history(current_agent_provider, old_session_id, session_info)
             else:
-                self.chat_view.run_command("term_chat_output_append", {"text": f"\n\n[reconnecting agent...]\n\n"})
+                self.chat_view.run_command(
+                    "term_chat_output_append", {"text": "\n\n[reconnecting agent...]\n\n"}
+                )
 
     def _replay_prompt(self, prompt_text):
         """Append a previously-submitted prompt with gutter highlight, as if the user had just sent it."""
