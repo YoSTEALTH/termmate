@@ -1423,9 +1423,9 @@ class ChatSession:
         html_tables = self.markdown_formatter.take_html_tables()
         if formatted_text:
             sublime.set_timeout(
-                lambda: self.chat_view.run_command(
+                lambda ft=formatted_text, ht=html_tables: self.chat_view.run_command(
                     "term_chat_output_append",
-                    {"text": formatted_text, "html_tables": html_tables},
+                    {"text": ft, "html_tables": ht},
                 ),
                 0,
             )
@@ -1681,12 +1681,14 @@ class ChatSession:
         if s_id:
             self.chat_view.settings().set(CHAT_SESSION_ID, s_id)
         self.pending_response_separator = True
+        self._reset_markdown_formatter()
         self.agent_thread.send(user_input)
 
     def steer(self, text, proceed_plan=False):
         """Send steering message to agent."""
         if self.agent_thread:
             self.pending_response_separator = True
+            self._reset_markdown_formatter()
             self.agent_thread.steer(text, proceed_plan=proceed_plan)
 
     def record_file_change(self, abs_path, rel_path, diff_text):

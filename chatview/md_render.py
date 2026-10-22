@@ -17,9 +17,20 @@ class MarkdownFormatter:
     def __init__(self, max_width_getter=None):
         self.table_buffer = []
         self.in_code_block = False
+        self.code_fence_char = None
+        self.code_fence_len = 0
         self.remaining_text = ""
         self.max_width_getter = max_width_getter
         self._html_tables = []
+
+    def reset(self):
+        """Reset internal buffers and code block fence states."""
+        self.table_buffer.clear()
+        self.in_code_block = False
+        self.code_fence_char = None
+        self.code_fence_len = 0
+        self.remaining_text = ""
+        self._html_tables.clear()
 
     def char_width(self, char):
         if unicodedata.combining(char):
@@ -597,13 +608,27 @@ class MarkdownFormatter:
         for line in lines:
             stripped = line.strip()
 
-            if stripped.startswith('```'):
-                flush_buffer()
-                self.in_code_block = not self.in_code_block
-                output_lines.append(line)
-                continue
-
-            if self.in_code_block:
+            if not self.in_code_block:
+                if stripped.startswith(('```', '~~~')):
+                    char = stripped[0]
+                    count = len(stripped) - len(stripped.lstrip(char))
+                    if count >= 3:
+                        flush_buffer()
+                        self.code_fence_char = char
+                        self.code_fence_len = count
+                        self.in_code_block = True
+                        output_lines.append(line)
+                        continue
+            else:
+                if stripped.startswith(self.code_fence_char * self.code_fence_len):
+                    char = self.code_fence_char
+                    count = len(stripped) - len(stripped.lstrip(char))
+                    if stripped[count:].strip() == "":
+                        self.code_fence_char = None
+                        self.code_fence_len = 0
+                        self.in_code_block = False
+                        output_lines.append(line)
+                        continue
                 output_lines.append(line)
                 continue
 

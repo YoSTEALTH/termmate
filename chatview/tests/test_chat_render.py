@@ -1,5 +1,11 @@
+import sys
 import unittest
+from unittest.mock import MagicMock
+
+sys.modules.setdefault("sublime", MagicMock())
+
 from chatview.chatrender import extract_diff_fold_ranges
+from chatview.md_render import MarkdownFormatter
 
 
 class TestDiffFolding(unittest.TestCase):
@@ -53,6 +59,65 @@ class TestDiffFolding(unittest.TestCase):
         )
         ranges = extract_diff_fold_ranges(text, limit=1, preview_lines=0)
         self.assertEqual(ranges, [])
+
+
+class TestMarkdownFormatterCodeFence(unittest.TestCase):
+
+    def setUp(self):
+        mock_settings = MagicMock()
+        mock_settings.get.side_effect = lambda k, default=None: (
+            "html" if k == "table_style" else default
+        )
+        sys.modules["sublime"].load_settings.return_value = mock_settings
+
+    def test_nested_code_fence_preserves_table_formatting(self):
+        text = (
+            "````markdown\n"
+            "```python\n"
+            "# nested code block\n"
+            "```\n"
+            "````\n"
+            "\n"
+            "| Col A | Col B |\n"
+            "|---|---|\n"
+            "| val 1 | val 2 |\n"
+        )
+        formatter = MarkdownFormatter()
+        output = formatter.format(text, flush=True)
+        tables = formatter.take_html_tables()
+
+        self.assertFalse(formatter.in_code_block)
+        self.assertEqual(len(tables), 1)
+        self.assertIn("≡", output)
+
+    def test_table_inside_code_block_not_formatted(self):
+        text = (
+            "```text\n"
+            "| Col A | Col B |\n"
+            "|---|---|\n"
+            "| val 1 | val 2 |\n"
+            "```\n"
+        )
+        formatter = MarkdownFormatter()
+        output = formatter.format(text, flush=True)
+        tables = formatter.take_html_tables()
+
+        self.assertFalse(formatter.in_code_block)
+        self.assertEqual(len(tables), 0)
+        self.assertNotIn("≡", output)
+
+    def test_reset_clears_code_block_state(self):
+        text = (
+            "```python\n"
+            "# unclosed block\n"
+        )
+        formatter = MarkdownFormatter()
+        formatter.format(text, flush=True)
+        self.assertTrue(formatter.in_code_block)
+
+        formatter.reset()
+        self.assertFalse(formatter.in_code_block)
+        self.assertEqual(formatter.table_buffer, [])
 
 
 if __name__ == "__main__":
