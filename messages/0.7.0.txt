@@ -1,0 +1,7 @@
+TermMate 0.7.0
+==============
+
+- OpenCode v2 Support
+  Supports the OpenCode v2 service API with automatic version detection.
+  Reuses a shared service across sessions and shuts it down after the
+  idle timeout. OpenCode v1 support remains.
