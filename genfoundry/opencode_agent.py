@@ -228,13 +228,13 @@ def probe_opencode_service(
 _ACTIVE_OPENCODE_SERVER: Optional[Dict[str, Any]] = None
 _ACTIVE_CLIENTS: set = set()
 _IDLE_SHUTDOWN_TIMER: Optional[threading.Timer] = None
-_DEFAULT_IDLE_SHUTDOWN_DELAY = 180.0
+_DEFAULT_IDLE_SHUTDOWN_DELAY = 120.0
 _SUBLIME_SERVER_PROCESS: Optional[subprocess.Popen] = None
 _SUBLIME_SERVER_JOB_HANDLE: Optional[int] = None
 
 
 def get_opencode_idle_timeout() -> float:
-    """Return idle shutdown delay in seconds from settings, or default 180s."""
+    """Return idle shutdown delay in seconds from settings, or default 120s."""
     try:
         import sublime
         settings = sublime.load_settings("TermMate.sublime-settings")
@@ -264,7 +264,7 @@ def schedule_idle_shutdown_timer(
     """Schedule OpenCode idle shutdown if no clients are active."""
     global _IDLE_SHUTDOWN_TIMER
     cancel_idle_shutdown_timer()
-    if _ACTIVE_CLIENTS:
+    if _ACTIVE_CLIENTS or not _ACTIVE_OPENCODE_SERVER:
         return
 
     timeout = get_opencode_idle_timeout() if delay is None else delay
@@ -275,7 +275,7 @@ def schedule_idle_shutdown_timer(
         return
 
     def _on_idle():
-        if _ACTIVE_CLIENTS:
+        if _ACTIVE_CLIENTS or not _ACTIVE_OPENCODE_SERVER:
             return
         LOG.info("OpenCode server idle for %.0fs; stopping server", timeout)
         stop_sublime_opencode_server(cli_path)
@@ -455,62 +455,32 @@ def stop_sublime_opencode_server(
     _ACTIVE_CLIENTS.clear()
     proc, _SUBLIME_SERVER_PROCESS = _SUBLIME_SERVER_PROCESS, None
     job_handle, _SUBLIME_SERVER_JOB_HANDLE = _SUBLIME_SERVER_JOB_HANDLE, None
-
     set_active_opencode_server(None)
-
-    if proc:
-        try:
-            if proc.stdin:
-                try:
-                    proc.stdin.close()
-                except Exception:
-                    pass
-            if sys.platform != "win32" and proc.poll() is None:
-                try:
-                    os.killpg(proc.pid, signal.SIGTERM)
-                except OSError:
-                    pass
-        except Exception:
-            pass
-        try:
-            proc.wait(timeout=2.0)
-        except Exception:
-            if proc.poll() is None:
-                try:
-                    proc.kill()
-                except OSError:
-                    pass
 
     if job_handle:
         _close_win32_handle(job_handle)
 
-    cli = find_opencode_cli(cli_path)
-    if cli:
-        env = os.environ.copy()
-        env["XDG_STATE_HOME"] = get_termmate_opencode_state_dir()
-        kwargs: Dict[str, Any] = {}
-        if sys.platform == "win32":
-            kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+    if proc:
         try:
-            p = subprocess.Popen(
-                [cli, "service", "stop"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                env=env,
-                **kwargs,
-            )
-            p.communicate(timeout=3.0)
-        except Exception as err:
-            LOG.debug("stop_sublime_opencode_server failed: %s", err)
+            if proc.stdin:
+                proc.stdin.close()
+        except Exception:
+            pass
+        try:
+            if sys.platform == "win32":
+                proc.terminate()
+            else:
+                os.killpg(proc.pid, signal.SIGTERM)
+        except Exception:
+            pass
 
     service_file = os.path.join(
         get_termmate_opencode_state_dir(), "opencode", "service.json"
     )
-    if os.path.isfile(service_file):
-        try:
-            os.remove(service_file)
-        except OSError:
-            pass
+    try:
+        os.remove(service_file)
+    except OSError:
+        pass
 
 
 _TOOL_NAMES = {

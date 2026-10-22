@@ -16,6 +16,7 @@ from ..genfoundry import (
     list_antigravity_sessions, get_antigravity_session_tail)
 from ..genfoundry.claude_agent import get_claude_session_tail
 from ..genfoundry.codex_agent import get_codex_session_info
+from ..genfoundry.opencode_agent import stop_sublime_opencode_server
 from ..genfoundry.pi_agent import get_pi_session_tail
 from .chatprocessor import (
     BaseChatMessageProcessor,
@@ -198,6 +199,7 @@ def plugin_unloaded():
         except Exception as e:
             LOG.error(f"Failed to stop ChatView session on plugin unload: {e}")
 
+    stop_sublime_opencode_server()
     chatview_clients.clear()
     for window in sublime.windows():
         update_agent_model_status(window)
