@@ -31,7 +31,7 @@ contexts:
     - include: scope:text.html.markdown#markdown
 
   agent_content:
-    - match: '^(⏺\s*(?:Read|Edit|Write|read|edit|write|fileChange|ViewFile|EditFile|WriteFile)\s+)(\S+.*)$'
+    - match: '^(⏺\s*(?:Read|Edit|Write|read|edit|write|fileChange|ViewFile|ReadFile|EditFile|WriteFile)\s+)(\S+.*)$'
       captures:
         1: entity.name.function.chatview
         2: variable.function.chatview
