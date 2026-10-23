@@ -2696,9 +2696,13 @@ class TermChatOutputAppendCommand(sublime_plugin.TextCommand):
 class TermChatInputPromptCommand(sublime_plugin.TextCommand):
 
     def run(self, edit, text):
-        # The last newline precedes the input line; it must exist before
-        # set_input_start anchors on it.
-        self.view.insert(edit, self.view.size(), "\n\n\n\n\n")
+        # - The first two newlines leave one blank line between the user prompt
+        #   and the upcoming response
+        # - The last two newlines leave one blank line before the new input prompt,
+        #   providing clean spacing and anchor regions for phantoms (loading spinner
+        #   at input_start - 1, model panel at input_start).
+        # set_input_start anchors on the final newline preceding the input line.
+        self.view.insert(edit, self.view.size(), "\n\n\n\n")
         set_input_start(self.view, self.view.size() - 1)
 
         # Update model phantom at new position
