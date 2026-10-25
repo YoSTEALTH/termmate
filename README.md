@@ -166,11 +166,11 @@ Control how much the agent can do without asking you first: `TermMate: Approve M
 
 ### Switch Agent
 
-Use `TermMate: Switch Agent` to swap between Claude, Codex, Antigravity, OpenCode, and Pi Agent at any time.
+Use `TermMate: Agent` to swap between Claude, Codex, Antigravity, OpenCode, and Pi Agent at any time.
 
 ### Select Model
 
-Use `TermMate: Select Model` to pick a specific LLM model per agent (e.g. `claude-opus-4-5` vs `claude-sonnet-4-5`). For models supporting thinking or reasoning, TermMate will prompt you to select the effort level (or adjust it via `TermMate: Reasoning Effort`).
+Use `TermMate: Model` to pick a specific LLM model per agent (e.g. `claude-opus-4-5` vs `claude-sonnet-4-5`). For models supporting thinking or reasoning, TermMate will prompt you to select the effort level (or adjust it via `TermMate: Reasoning Effort`).
 
 ## Artifacts
 
@@ -226,8 +226,8 @@ When confirmed, TermMate forks the session at the selected prompt, removes all s
 | **Navigate Input History** | `Up` / `Down` | `Up` / `Down` | - |
 | **Mention File** | `@` | `@` | - |
 | **Set Workspace** | - | - | `TermMate: Set Working Directory` |
-| **Switch Agent** | - | - | `TermMate: Switch Agent` |
-| **Select Model** | - | - | `TermMate: Select Model` |
+| **Switch Agent** | - | - | `TermMate: Agent` |
+| **Select Model** | - | - | `TermMate: Model` |
 | **Plan Mode** | - | - | `TermMate: Plan Mode` |
 | **Approve Mode** | - | - | `TermMate: Approve Mode` |
 | **Reasoning Effort** | - | - | `TermMate: Reasoning Effort` |
