@@ -3384,14 +3384,21 @@ class TermChatSetModelCommand(sublime_plugin.WindowCommand):
         if not model:
             return
         model = model.strip()
+        level = level.strip() if level else None
+
         agent_provider = self.window.settings().get(CHAT_AGENT, "claude")
+        curr_model = self.window.settings().get(f"chatview_model_{agent_provider}")
+        curr_level = self.window.settings().get(f"chatview_think_level_{agent_provider}")
+
+        if model == curr_model and (not level or level == curr_level):
+            return
+
         self.window.settings().set(f"chatview_model_{agent_provider}", model)
         self.window.settings().set(CHAT_MODEL, model)
 
         config_updates = {"model": model}
 
         if level:
-            level = level.strip()
             self.window.settings().set(f"chatview_think_level_{agent_provider}", level)
             self.window.settings().set(CHAT_THINK_LEVEL, level)
             config_updates["think_level"] = level
@@ -3644,23 +3651,20 @@ class TermChatTogglePlanModeCommand(sublime_plugin.WindowCommand):
     Toggle plan mode for the current ChatView session.
     """
     def run(self, mode):
-        # mode is a string value from PlanMode
-        if mode == PlanMode.PLANNING.value:
-            plan_mode_enum = PlanMode.PLANNING
-        else:
-            plan_mode_enum = PlanMode.FAST
+        if self.window.settings().get(CHAT_PLAN_MODE) == mode:
+            return
 
-        self.window.settings().set(CHAT_PLAN_MODE, plan_mode_enum.value)
+        plan_mode = PlanMode.PLANNING if mode == PlanMode.PLANNING.value else PlanMode.FAST
+        self.window.settings().set(CHAT_PLAN_MODE, plan_mode.value)
 
         window_id = self.window.id()
         if window_id in chatview_clients:
             session = chatview_clients[window_id]
             session.model_phantom.update()
             # Update plan mode (reconnects for Claude, dynamic update for Codex)
-            session.update_plan_mode(plan_mode=plan_mode_enum)
+            session.update_plan_mode(plan_mode=plan_mode)
 
-        status = "planning" if plan_mode_enum == PlanMode.PLANNING else "fast"
-        sublime.status_message(f"Plan mode set to: {status}")
+        sublime.status_message(f"Plan mode set to: {plan_mode.value}")
 
     def input(self, args):
         if "mode" not in args:
