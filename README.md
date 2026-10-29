@@ -30,11 +30,11 @@ Install TermMate via [Package Control](https://packagecontrol.io/packages/TermMa
 
 ### 2. Install Agent CLI
 
-If Claude Code, Codex, Google Antigravity, OpenCode, or Pi Agent is already installed and authenticated, **skip this step**. TermMate automatically detects existing CLI installations and uses their current authentication — no extra setup needed.
+If the following agent is already installed and authenticated, **skip this step** — TermMate detects existing installations automatically.
 
-Otherwise, the easiest way is to install directly from within Sublime Text: open the Command Palette, type `TermMate: Install Agent`, and select the agent you want. TermMate will run the installation in dedicated panel and notify you when it's complete. CLIs are installed to `~/.local/bin` on macOS/Linux and `%APPDATA%\npm` on Windows.
+Otherwise, install directly within Sublime Text via the Command Palette (`TermMate: Install Agent`), which sets up the selected CLI (`~/.local/bin` on macOS/Linux, `%APPDATA%\npm` on Windows).
 
-Alternatively, manually install an agent from your terminal:
+Alternatively, you can also manually install an agent from your terminal:
 
 ```shell
 # Claude Code
