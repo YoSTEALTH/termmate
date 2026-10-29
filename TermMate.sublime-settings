@@ -63,6 +63,11 @@
     // When true, files you open will not appear in the chat's pane.
     "dedicated_chat_pane": true,
 
+    // Open the input pane with every chat: a small input box in its own pane under
+    // the Chat View that stays visible while you scroll back through the chat.
+    // "TermMate: Toggle Input Pane" opens / closes it at any time.
+    "input_pane": false,
+
     // Underline file paths in agent replies (`src/main.py:42`, `src/main.py#L10-25`)
     // that exist on disk. Hover one for an "Open" link, or double-click it.
     // Paths inside `code` or a fenced code block are code, not links.

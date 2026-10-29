@@ -147,7 +147,11 @@ You can use the command palette (`TermMate: Split Chat Window`) or right-click t
 
 File paths the agent writes in its replies (`src/main.py`, `src/main.py:42`, `src/main.py#L10-25`, `/abs/path/main.py`) are underlined when the file exists, and so are `http://` and `https://` addresses; paths and addresses inside `` `code` `` or a fenced code block are code and stay plain. Hover one for an **Open** link, or double-click it (one click with `"file_links_click": "single"`), to open the file at that line (a `#L10-25` range is selected) or the address in your browser. Relative paths resolve against the agent's working directory, then the window's folders. Turn this off with the `file_links` setting.
 
-**7. Folded Tool Calls**
+**7. Input Pane**
+
+The chat's input line is the end of the chat, so it scrolls out of sight while you read back through the conversation. Click the ⬓ icon after PlanMode in the bar (it is highlighted while the pane is closed), run `TermMate: Toggle Input Pane`, or right-click the chat tab to open a small input box in its own pane under the chat; it stays put however far you scroll. It works like the input line: `Ctrl+Enter` (`Cmd+Enter` on macOS) sends, `Up` / `Down` on the first / last line step through your prompt history, `@` completes file names, and **TermMate: Chat with Agent** adds context there. While it is open, the Agent / Model / PlanMode bar moves from the end of the chat into the pane, and typing in the chat goes to the pane. It keeps its height when you resize the window (drag the split to change it). Closing the pane gives its space back to the chat. Set `"input_pane": true` to open it with every chat.
+
+**8. Folded Tool Calls**
 
 The tool calls between the agent's messages (`⏺ Bash ...`, `⏺ Read ...`, edits with their diffs) are folded into one line per run once the run is over, so the chat reads as what the agent says:
 
@@ -219,7 +223,7 @@ To reset the current conversation history and start a completely fresh context, 
 
 **2. Resume Previous Conversation**
 
-Run **`TermMate: Resume Session`** from the command palette to continue a past conversation. A quick panel lists previous sessions for the current workspace, each showing a short summary and timestamp. Select one and the agent picks up exactly where it left off.
+Run **`TermMate: Resume Session`** from the command palette to continue a past conversation. A quick panel lists previous sessions for the current workspace, each showing a short summary and timestamp. Select one and the agent picks up exactly where it left off. Select the session you are already on (marked ●) to show its recent turns again, up to `session_history_limit`; this restores the chat text if Sublime lost it when restarting. The **Chats** button in the Agent / Model / PlanMode bar opens the same list.
 
 **3. Rewind Conversation**
 
@@ -235,6 +239,7 @@ When confirmed, TermMate forks the session at the selected prompt, removes all s
 | **Start New Chat** | - | - | `TermMate: Start Chat` |
 | **Quick Message** | - | - | `TermMate: Quick Message` |
 | **Split Chat Window** | - | - | `TermMate: Split Chat Window` |
+| **Input Pane** | - | - | `TermMate: Toggle Input Pane` |
 | **Send Message** | `Cmd+Enter` | `Ctrl+Enter` | - |
 | **Stop Conversation** | `Cmd+Escape` | `Shift+Escape` | `TermMate: Stop Conversation` |
 | **Navigate Input History** | `Up` / `Down` | `Up` / `Down` | - |
@@ -364,6 +369,7 @@ These settings can be added or changed in `Preferences → Package Settings → 
 | `fold_tool_calls` | Folds each multi-line tool call to its first line once it is finished, and each run of two or more calls in a reply under one `⏺ N tool calls` line; click that line (or the `⏺` of a call) to expand or collapse it. | `true` or `false`; default: `true` |
 | `list_indent` | Indents lists in agent replies by this many spaces so they stand out from the surrounding text; the blank line between a text line and a list is dropped, and a line ending with `:` pulls in the paragraph or code block after it the same way. Other code blocks are left alone. | number of spaces; default: `4`; `0` keeps everything as written |
 | `dedicated_chat_pane` | Keeps the Chat tab in a dedicated pane so files opened elsewhere do not replace it. | `true` or `false`; default: `true` |
+| `input_pane` | Open the input pane (an input box that stays below the chat while you scroll) with every chat. | `true` or `false`; default: `false` |
 | `file_links` | Underlines existing file paths and web addresses in agent replies; hover or double-click one to open it (the file at its line, the address in the browser). | `true` or `false`; default: `true` |
 | `file_links_click` | Whether a file or web link opens on a single click or a double-click. | `"single"` or `"double"`; default: `"double"` |
 | `show_status_indicator` | Whether to display model indicator `claude(sonnet)` in status bar | `true` or `false`; default: `true` |
